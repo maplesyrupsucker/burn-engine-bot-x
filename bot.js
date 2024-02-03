@@ -106,15 +106,17 @@ async function handleTotalVerseBurned(inReplyToTweetId = null) {
 async function handleTransfer(event) {
   await fetchVerseUsdRate();
   const valueWei = event.returnValues.value;
-  const valueEth = web3.utils.fromWei(valueWei, "ether");
+  const valueEth = Number(web3.utils.fromWei(valueWei, "ether"));
 
   const burnEngineBalanceWei = await verseTokenContract.methods
     .balanceOf("0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8")
     .call();
-  lastKnownBalanceEth = web3.utils.fromWei(burnEngineBalanceWei, "ether");
+  lastKnownBalanceEth = Number(
+    web3.utils.fromWei(burnEngineBalanceWei, "ether")
+  );
 
   const tweetMessage =
-    `🚀 New Verse Token Deposit: ${valueEth.toFixed(2)} VERSE (~$${(
+    `🚀 New $Verse Token Deposit: ${valueEth.toFixed(2)} VERSE (~$${(
       valueEth * verseUsdRate
     ).toFixed(2)} USD)\n` +
     `🔥 Current Burn Engine Balance: ${lastKnownBalanceEth.toFixed(2)} VERSE`;
@@ -134,43 +136,46 @@ async function handleTokensBurned(event) {
 }
 
 async function monitorEvents() {
-    const nullAddress = "0x0000000000000000000000000000000000000000";
-  
-    while (true) {
-      try {
-        const latestBlock = await web3.eth.getBlockNumber();
-        const fromBlock = lastProcessedBlock > 0 ? lastProcessedBlock + 1 : 18481385;
-  
-        if (fromBlock <= latestBlock) {
-          // Monitor transfers to the burn engine address
-          const transferEvents = await verseTokenContract.getPastEvents("Transfer", {
+  const nullAddress = "0x0000000000000000000000000000000000000000";
+
+  while (true) {
+    try {
+      const latestBlock = await web3.eth.getBlockNumber();
+      const fromBlock =
+        lastProcessedBlock > 0 ? lastProcessedBlock + 1 : 18481385;
+
+      if (fromBlock <= latestBlock) {
+        // Monitor transfers to the burn engine address
+        const transferEvents = await verseTokenContract.getPastEvents(
+          "Transfer",
+          {
             fromBlock: fromBlock,
             toBlock: "latest",
             filter: { to: "0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8" }, // Burn engine address
-          });
-          transferEvents.forEach((event) => handleTransfer(event));
-  
-          // Monitor transfers to the null address (token burns)
-          const burnEvents = await verseTokenContract.getPastEvents("Transfer", {
-            fromBlock: fromBlock,
-            toBlock: "latest",
-            filter: { to: nullAddress },
-          });
-          burnEvents.forEach((event) => handleTokensBurned(event)); // Reuse or modify handleTokensBurned function accordingly
-  
-          lastProcessedBlock = latestBlock;
-        } else {
-          console.log(`💤 No new events to process. Next check in 30 seconds.`);
-        }
-  
-        await new Promise((resolve) => setTimeout(resolve, 30000));
-      } catch (e) {
-        console.error(`Error in event monitoring: ${e.message}`);
-        await new Promise((resolve) => setTimeout(resolve, 60000));
+          }
+        );
+        transferEvents.forEach((event) => handleTransfer(event));
+
+        // Monitor transfers to the null address (token burns)
+        const burnEvents = await verseTokenContract.getPastEvents("Transfer", {
+          fromBlock: fromBlock,
+          toBlock: "latest",
+          filter: { to: nullAddress },
+        });
+        burnEvents.forEach((event) => handleTokensBurned(event)); // Reuse or modify handleTokensBurned function accordingly
+
+        lastProcessedBlock = latestBlock;
+      } else {
+        console.log(`💤 No new events to process. Next check in 30 seconds.`);
       }
+
+      await new Promise((resolve) => setTimeout(resolve, 30000));
+    } catch (e) {
+      console.error(`Error in event monitoring: ${e.message}`);
+      await new Promise((resolve) => setTimeout(resolve, 60000));
     }
   }
-  
+}
 
 async function startTwitterStream() {
   try {
