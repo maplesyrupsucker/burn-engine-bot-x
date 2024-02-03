@@ -1,7 +1,7 @@
 require("dotenv").config();
 const axios = require("axios");
 const Web3 = require("web3");
-const TwitterApi = require("twitter-api-v2").default;
+const TwitterApi = require('twitter-api-v2').default;
 
 // Twitter and Web3 Setup
 const twitterClient = new TwitterApi({
@@ -14,10 +14,7 @@ const twitterClient = new TwitterApi({
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 const verseTokenABI = require("./VerseTokenABI.json"); // Add your ABI JSON
 const verseTokenAddress = "0x249cA82617eC3DfB2589c4c17ab7EC9765350a18";
-const verseTokenContract = new web3.eth.Contract(
-  verseTokenABI,
-  verseTokenAddress
-);
+const verseTokenContract = new web3.eth.Contract(verseTokenABI, verseTokenAddress);
 const flamethrowerGifUrl = "https://i.imgflip.com/8ef4jd.gif";
 
 let lastKnownBalanceEth = 0;
@@ -26,9 +23,7 @@ let lastProcessedBlock = 0;
 
 async function fetchVerseUsdRate() {
   try {
-    const response = await axios.get(
-      "https://markets.api.bitcoin.com/rates/convertor/?q=USD&c=VERSE"
-    );
+    const response = await axios.get("https://markets.api.bitcoin.com/rates/convertor/?q=USD&c=VERSE");
     verseUsdRate = response.data.USD.rate;
   } catch (e) {
     console.error(`Error fetching USD rate: ${e.message}`);
@@ -46,9 +41,7 @@ async function postTweet(message) {
 
 async function fetchCirculatingSupply() {
   try {
-    const response = await axios.get(
-      "https://markets.api.bitcoin.com/coin/data/circulating?c=VERSE"
-    );
+    const response = await axios.get("https://markets.api.bitcoin.com/coin/data/circulating?c=VERSE");
     return parseFloat(response.data);
   } catch (e) {
     console.error(`Error fetching circulating supply: ${e.message}`);
@@ -62,37 +55,23 @@ async function handleTotalVerseBurned(inReplyToTweetId = null) {
   const totalSupply = 210e9; // 210 billion VERSE
   const circulatingSupply = await fetchCirculatingSupply();
 
-  const transferEventsToNull = await verseTokenContract.getPastEvents(
-    "Transfer",
-    {
-      fromBlock: startBlock,
-      toBlock: "latest",
-      filter: { to: nullAddress },
-    }
-  );
+  const transferEventsToNull = await verseTokenContract.getPastEvents("Transfer", {
+    fromBlock: startBlock,
+    toBlock: "latest",
+    filter: { to: nullAddress }
+  });
 
-  const totalBurnedWei = transferEventsToNull.reduce(
-    (sum, event) => sum + BigInt(event.returnValues.value),
-    BigInt(0)
-  );
+  const totalBurnedWei = transferEventsToNull.reduce((sum, event) => sum + BigInt(event.returnValues.value), BigInt(0));
   const totalBurnedEth = web3.utils.fromWei(totalBurnedWei.toString(), "ether");
   const totalBurnEvents = transferEventsToNull.length;
   const totalSupplyBurnedPercent = (totalBurnedEth / totalSupply) * 100;
-  const circulatingSupplyBurnedPercent = circulatingSupply
-    ? (totalBurnedEth / circulatingSupply) * 100
-    : null;
+  const circulatingSupplyBurnedPercent = circulatingSupply ? (totalBurnedEth / circulatingSupply) * 100 : null;
 
-  let tweetMessage = `** Total VERSE Burned **\n🔥 Cumulative Verse Tokens Burned: ${totalBurnedEth.toFixed(
-    2
-  )} VERSE\n`;
+  let tweetMessage = `** Total VERSE Burned **\n🔥 Cumulative Verse Tokens Burned: ${totalBurnedEth.toFixed(2)} VERSE\n`;
   tweetMessage += `🔥 Total Burn Events: ${totalBurnEvents}\n`;
-  tweetMessage += `📊 % of Total Supply Burned: ${totalSupplyBurnedPercent.toFixed(
-    4
-  )}%\n`;
+  tweetMessage += `📊 % of Total Supply Burned: ${totalSupplyBurnedPercent.toFixed(4)}%\n`;
   if (circulatingSupplyBurnedPercent) {
-    tweetMessage += `🌐 % of Circulating Supply Burned: ${circulatingSupplyBurnedPercent.toFixed(
-      4
-    )}%\n`;
+    tweetMessage += `🌐 % of Circulating Supply Burned: ${circulatingSupplyBurnedPercent.toFixed(4)}%\n`;
   }
   tweetMessage += `👨‍🚀 Visit [Verse Token](https://verse.bitcoin.com) for more info`;
 
@@ -108,16 +87,11 @@ async function handleTransfer(event) {
   const valueWei = event.returnValues.value;
   const valueEth = web3.utils.fromWei(valueWei, "ether");
 
-  const burnEngineBalanceWei = await verseTokenContract.methods
-    .balanceOf("0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8")
-    .call();
+  const burnEngineBalanceWei = await verseTokenContract.methods.balanceOf("0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8").call();
   lastKnownBalanceEth = web3.utils.fromWei(burnEngineBalanceWei, "ether");
 
-  const tweetMessage =
-    `🚀 New Verse Token Deposit: ${valueEth.toFixed(2)} VERSE (~$${(
-      valueEth * verseUsdRate
-    ).toFixed(2)} USD)\n` +
-    `🔥 Current Burn Engine Balance: ${lastKnownBalanceEth.toFixed(2)} VERSE`;
+  const tweetMessage = `🚀 New Verse Token Deposit: ${valueEth.toFixed(2)} VERSE (~$${(valueEth * verseUsdRate).toFixed(2)} USD)\n` +
+                       `🔥 Current Burn Engine Balance: ${lastKnownBalanceEth.toFixed(2)} VERSE`;
   await postTweet(tweetMessage);
 }
 
@@ -125,10 +99,8 @@ async function handleTokensBurned(event) {
   await fetchVerseUsdRate();
   const amountWei = event.returnValues.amount;
   const amountEth = web3.utils.fromWei(amountWei, "ether");
-
-  const tweetMessage = `🔥💥 Tokens Burned: ${amountEth.toFixed(2)} VERSE (~$${(
-    amountEth * verseUsdRate
-  ).toFixed(2)} USD)\nThe burn engine's flames roar!`;
+  
+  const tweetMessage = `🔥💥 Tokens Burned: ${amountEth.toFixed(2)} VERSE (~$${(amountEth * verseUsdRate).toFixed(2)} USD)\nThe burn engine's flames roar!`;
   const tweetId = await postTweet(tweetMessage);
   await handleTotalVerseBurned(tweetId); // Post in reply to the burn event
 }
@@ -137,27 +109,20 @@ async function monitorEvents() {
   while (true) {
     try {
       const latestBlock = await web3.eth.getBlockNumber();
-      const fromBlock =
-        lastProcessedBlock > 0 ? lastProcessedBlock + 1 : 18481385;
+      const fromBlock = lastProcessedBlock > 0 ? lastProcessedBlock + 1 : 18481385;
 
       if (fromBlock <= latestBlock) {
-        const transferEvents = await verseTokenContract.getPastEvents(
-          "Transfer",
-          {
-            fromBlock: fromBlock,
-            toBlock: "latest",
-            filter: { to: "0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8" },
-          }
-        );
+        const transferEvents = await verseTokenContract.getPastEvents("Transfer", {
+          fromBlock: fromBlock,
+          toBlock: "latest",
+          filter: { to: "0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8" },
+        });
         transferEvents.forEach((event) => handleTransfer(event));
 
-        const tokensBurnedEvents = await verseTokenContract.getPastEvents(
-          "TokensBurned",
-          {
-            fromBlock: fromBlock,
-            toBlock: "latest",
-          }
-        );
+        const tokensBurnedEvents = await verseTokenContract.getPastEvents("TokensBurned", {
+          fromBlock: fromBlock,
+          toBlock: "latest",
+        });
         tokensBurnedEvents.forEach((event) => handleTokensBurned(event));
         lastProcessedBlock = latestBlock;
       } else {
@@ -172,21 +137,41 @@ async function monitorEvents() {
   }
 }
 
-// Twitter Stream to listen for mentions
-const stream = twitterClient.v2.stream("tweets/search/stream");
-stream.on("data", async (tweet) => {
-  if (tweet.data.text.includes("@burnengine_bot")) {
-    await handleTotalVerseBurned(tweet.data.id);
+
+async function startTwitterStream() {
+    try {
+      const stream = twitterClient.v2.stream('tweets/search/stream');
+      stream.on('data', async (tweet) => {
+        if (tweet.data.text.includes('@burnengine_bot')) {
+          await handleTotalVerseBurned(tweet.data.id);
+        }
+      });
+  
+      stream.on('error', (error) => {
+        console.error('Stream error:', error);
+      });
+  
+      await stream.connect({ autoReconnect: true, autoReconnectRetries: Infinity });
+    } catch (e) {
+      console.error(`Error in Twitter stream: ${e.message}`);
+    }
   }
-});
-
-stream.on("error", (error) => {
-  console.error("Stream error:", error);
-});
-
-await stream.connect({ autoReconnect: true, autoReconnectRetries: Infinity });
-
-// Start monitoring blockchain events
-initialize().then(() => {
-  console.log("Monitoring blockchain events...");
-});
+  
+  async function initialize() {
+    try {
+      const balanceWei = await verseTokenContract.methods.balanceOf("0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8").call();
+      lastKnownBalanceEth = web3.utils.fromWei(balanceWei, "ether");
+      console.log(`Initial Burn Engine Balance: ${lastKnownBalanceEth} VERSE`);
+      await fetchVerseUsdRate();
+      
+      lastProcessedBlock = await web3.eth.getBlockNumber();
+      console.log(`Starting event monitoring from block: ${lastProcessedBlock}`);
+      monitorEvents();
+      startTwitterStream();
+    } catch (e) {
+      console.error(`Error during initialization: ${e.message}`);
+    }
+  }
+  
+  initialize().catch(console.error);
+  
