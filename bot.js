@@ -214,7 +214,7 @@ async function initialize() {
     lastProcessedBlock = await web3.eth.getBlockNumber();
     console.log(`Starting event monitoring from block: ${lastProcessedBlock}`);
     monitorEvents();
-    startTwitterStream();
+    // startTwitterStream();
   } catch (e) {
     console.error(`Error during initialization: ${e.message}`);
   }
