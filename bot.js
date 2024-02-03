@@ -67,13 +67,13 @@ async function handleTotalVerseBurned(inReplyToTweetId = null) {
   const totalSupplyBurnedPercent = (totalBurnedEth / totalSupply) * 100;
   const circulatingSupplyBurnedPercent = circulatingSupply ? (totalBurnedEth / circulatingSupply) * 100 : null;
 
-  let tweetMessage = `** Total VERSE Burned **\n🔥 Cumulative Verse Tokens Burned: ${totalBurnedEth.toFixed(2)} VERSE\n`;
+  let tweetMessage = `** Total $VERSE Burned **\n🔥 Cumulative Verse Tokens Burned: ${totalBurnedEth.toFixed(2)} VERSE\n`;
   tweetMessage += `🔥 Total Burn Events: ${totalBurnEvents}\n`;
   tweetMessage += `📊 % of Total Supply Burned: ${totalSupplyBurnedPercent.toFixed(4)}%\n`;
   if (circulatingSupplyBurnedPercent) {
     tweetMessage += `🌐 % of Circulating Supply Burned: ${circulatingSupplyBurnedPercent.toFixed(4)}%\n`;
   }
-  tweetMessage += `👨‍🚀 Visit [Verse Token](https://verse.bitcoin.com) for more info`;
+  tweetMessage += `👨‍🚀 Visit [Verse Burn Engine](https://verse.bitcoin.com/burn/) for more burn stats`;
 
   if (inReplyToTweetId) {
     await twitterClient.v2.reply(tweetMessage, inReplyToTweetId);
@@ -90,8 +90,8 @@ async function handleTransfer(event) {
   const burnEngineBalanceWei = await verseTokenContract.methods.balanceOf("0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8").call();
   lastKnownBalanceEth = web3.utils.fromWei(burnEngineBalanceWei, "ether");
 
-  const tweetMessage = `🚀 New Verse Token Deposit: ${valueEth.toFixed(2)} VERSE (~$${(valueEth * verseUsdRate).toFixed(2)} USD)\n` +
-                       `🔥 Current Burn Engine Balance: ${lastKnownBalanceEth.toFixed(2)} VERSE`;
+  const tweetMessage = `🚀 New Verse Token Deposit: ${valueEth.toFixed(2)} $VERSE (~$${(valueEth * verseUsdRate).toFixed(2)} USD)\n` +
+                       `🔥 Current Burn Engine Balance: ${lastKnownBalanceEth.toFixed(2)} $VERSE`;
   await postTweet(tweetMessage);
 }
 
@@ -100,7 +100,7 @@ async function handleTokensBurned(event) {
   const amountWei = event.returnValues.amount;
   const amountEth = web3.utils.fromWei(amountWei, "ether");
   
-  const tweetMessage = `🔥💥 Tokens Burned: ${amountEth.toFixed(2)} VERSE (~$${(amountEth * verseUsdRate).toFixed(2)} USD)\nThe burn engine's flames roar!`;
+  const tweetMessage = `🔥💥 Tokens Burned: ${amountEth.toFixed(2)} $VERSE (~$${(amountEth * verseUsdRate).toFixed(2)} USD)\nThe burn engine's flames roar!`;
   const tweetId = await postTweet(tweetMessage);
   await handleTotalVerseBurned(tweetId); // Post in reply to the burn event
 }
