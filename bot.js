@@ -57,51 +57,46 @@ async function fetchCirculatingSupply() {
 }
 
 async function handleTotalVerseBurned(inReplyToTweetId = null) {
-  const nullAddress = "0x0000000000000000000000000000000000000000";
-  const startBlock = 16129240; // Block when Verse token was created
-  const totalSupply = 210e9; // 210 billion VERSE
-  const circulatingSupply = await fetchCirculatingSupply();
-
-  const transferEventsToNull = await verseTokenContract.getPastEvents(
-    "Transfer",
-    {
-      fromBlock: startBlock,
-      toBlock: "latest",
-      filter: { to: nullAddress },
+    const nullAddress = "0x0000000000000000000000000000000000000000";
+    const startBlock = 16129240; // Block when Verse token was created
+    const totalSupply = 210e9; // 210 billion VERSE
+    const circulatingSupply = await fetchCirculatingSupply();
+  
+    const transferEventsToNull = await verseTokenContract.getPastEvents(
+      "Transfer",
+      {
+        fromBlock: startBlock,
+        toBlock: "latest",
+        filter: { to: nullAddress },
+      }
+    );
+  
+    const totalBurnedWei = transferEventsToNull.reduce(
+      (sum, event) => sum + BigInt(event.returnValues.value),
+      BigInt(0)
+    );
+    const totalBurnedEth = web3.utils.fromWei(totalBurnedWei.toString(), "ether");
+    const totalBurnEvents = transferEventsToNull.length;
+    const totalSupplyBurnedPercent = (totalBurnedEth / totalSupply) * 100;
+    const circulatingSupplyBurnedPercent = circulatingSupply
+      ? (totalBurnedEth / circulatingSupply) * 100
+      : null;
+  
+    let tweetMessage = `** Total $VERSE Burned **\n🔥 Cumulative Verse Tokens Burned: ${totalBurnedEth.toFixed(2)} VERSE (~$${(totalBurnedEth * verseUsdRate).toFixed(2)} USD)\n`;
+    tweetMessage += `🔥 Total Burn Events: ${totalBurnEvents}\n`;
+    tweetMessage += `📊 % of Total Supply Burned: ${totalSupplyBurnedPercent.toFixed(4)}%\n`;
+    if (circulatingSupplyBurnedPercent) {
+      tweetMessage += `🌐 % of Circulating Supply Burned: ${circulatingSupplyBurnedPercent.toFixed(4)}%\n`;
     }
-  );
-
-  const totalBurnedWei = transferEventsToNull.reduce(
-    (sum, event) => sum + BigInt(event.returnValues.value),
-    BigInt(0)
-  );
-  const totalBurnedEth = web3.utils.fromWei(totalBurnedWei.toString(), "ether");
-  const totalBurnEvents = transferEventsToNull.length;
-  const totalSupplyBurnedPercent = (totalBurnedEth / totalSupply) * 100;
-  const circulatingSupplyBurnedPercent = circulatingSupply
-    ? (totalBurnedEth / circulatingSupply) * 100
-    : null;
-
-  let tweetMessage = `** Total VERSE Burned **\n🔥 Cumulative Verse Tokens Burned: ${totalBurnedEth.toFixed(
-    2
-  )} VERSE\n`;
-  tweetMessage += `🔥 Total Burn Events: ${totalBurnEvents}\n`;
-  tweetMessage += `📊 % of Total Supply Burned: ${totalSupplyBurnedPercent.toFixed(
-    4
-  )}%\n`;
-  if (circulatingSupplyBurnedPercent) {
-    tweetMessage += `🌐 % of Circulating Supply Burned: ${circulatingSupplyBurnedPercent.toFixed(
-      4
-    )}%\n`;
+    tweetMessage += `👨‍🚀 Visit https://verse.bitcoin.com/burn for more stats`;
+  
+    if (inReplyToTweetId) {
+      await twitterClient.v2.reply(tweetMessage, inReplyToTweetId);
+    } else {
+      await postTweet(tweetMessage);
+    }
   }
-  tweetMessage += `👨‍🚀 Visit [Verse Token](https://verse.bitcoin.com) for more info`;
-
-  if (inReplyToTweetId) {
-    await twitterClient.v2.reply(tweetMessage, inReplyToTweetId);
-  } else {
-    await postTweet(tweetMessage);
-  }
-}
+  
 
 async function handleTransfer(event) {
   await fetchVerseUsdRate();
@@ -119,7 +114,9 @@ async function handleTransfer(event) {
     `🚀 New $Verse Token Deposit: ${valueEth.toFixed(2)} VERSE (~$${(
       valueEth * verseUsdRate
     ).toFixed(2)} USD)\n` +
-    `🔥 Current Burn Engine Balance: ${lastKnownBalanceEth.toFixed(2)} VERSE`;
+    `🔥 Current Burn Engine Balance: ${lastKnownBalanceEth.toFixed(
+      2
+    )} VERSE (~$${(lastKnownBalanceEth * verseUsdRate).toFixed(2)} USD)`;
   await postTweet(tweetMessage);
 }
 
