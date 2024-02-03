@@ -134,43 +134,43 @@ async function handleTokensBurned(event) {
 }
 
 async function monitorEvents() {
-  while (true) {
-    try {
-      const latestBlock = await web3.eth.getBlockNumber();
-      const fromBlock =
-        lastProcessedBlock > 0 ? lastProcessedBlock + 1 : 18481385;
-
-      if (fromBlock <= latestBlock) {
-        const transferEvents = await verseTokenContract.getPastEvents(
-          "Transfer",
-          {
+    const nullAddress = "0x0000000000000000000000000000000000000000";
+  
+    while (true) {
+      try {
+        const latestBlock = await web3.eth.getBlockNumber();
+        const fromBlock = lastProcessedBlock > 0 ? lastProcessedBlock + 1 : 18481385;
+  
+        if (fromBlock <= latestBlock) {
+          // Monitor transfers to the burn engine address
+          const transferEvents = await verseTokenContract.getPastEvents("Transfer", {
             fromBlock: fromBlock,
             toBlock: "latest",
-            filter: { to: "0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8" },
-          }
-        );
-        transferEvents.forEach((event) => handleTransfer(event));
-
-        const tokensBurnedEvents = await verseTokenContract.getPastEvents(
-          "TokensBurned",
-          {
+            filter: { to: "0x6b2a57dE29e6d73650Cb17b7710F2702b1F73CB8" }, // Burn engine address
+          });
+          transferEvents.forEach((event) => handleTransfer(event));
+  
+          // Monitor transfers to the null address (token burns)
+          const burnEvents = await verseTokenContract.getPastEvents("Transfer", {
             fromBlock: fromBlock,
             toBlock: "latest",
-          }
-        );
-        tokensBurnedEvents.forEach((event) => handleTokensBurned(event));
-        lastProcessedBlock = latestBlock;
-      } else {
-        console.log(`💤 No new events to process. Next check in 30 seconds.`);
+            filter: { to: nullAddress },
+          });
+          burnEvents.forEach((event) => handleTokensBurned(event)); // Reuse or modify handleTokensBurned function accordingly
+  
+          lastProcessedBlock = latestBlock;
+        } else {
+          console.log(`💤 No new events to process. Next check in 30 seconds.`);
+        }
+  
+        await new Promise((resolve) => setTimeout(resolve, 30000));
+      } catch (e) {
+        console.error(`Error in event monitoring: ${e.message}`);
+        await new Promise((resolve) => setTimeout(resolve, 60000));
       }
-
-      await new Promise((resolve) => setTimeout(resolve, 30000));
-    } catch (e) {
-      console.error(`Error in event monitoring: ${e.message}`);
-      await new Promise((resolve) => setTimeout(resolve, 60000));
     }
   }
-}
+  
 
 async function startTwitterStream() {
   try {
