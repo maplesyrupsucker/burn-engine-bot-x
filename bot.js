@@ -82,7 +82,7 @@ async function handleTotalVerseBurned(inReplyToTweetId = null) {
       ? (totalBurnedEth / circulatingSupply) * 100
       : null;
   
-    let tweetMessage = `** Total $VERSE Burned **\n🔥 Cumulative Verse Tokens Burned: ${totalBurnedEth.toFixed(2)} VERSE (~$${(totalBurnedEth * verseUsdRate).toFixed(2)} USD)\n`;
+    let tweetMessage = `🔥 Cumulative Verse Tokens Burned: ${totalBurnedEth.toFixed(2)} $VERSE (~$${(totalBurnedEth * verseUsdRate).toFixed(2)} USD)\n`;
     tweetMessage += `🔥 Total Burn Events: ${totalBurnEvents}\n`;
     tweetMessage += `📊 % of Total Supply Burned: ${totalSupplyBurnedPercent.toFixed(4)}%\n`;
     if (circulatingSupplyBurnedPercent) {
@@ -120,17 +120,54 @@ async function handleTransfer(event) {
   await postTweet(tweetMessage);
 }
 
-async function handleTokensBurned(event) {
-  await fetchVerseUsdRate();
-  const amountWei = event.returnValues.amount;
-  const amountEth = web3.utils.fromWei(amountWei, "ether");
 
-  const tweetMessage = `🔥💥 Tokens Burned: ${amountEth.toFixed(2)} VERSE (~$${(
-    amountEth * verseUsdRate
-  ).toFixed(2)} USD)\nThe burn engine's flames roar!`;
-  const tweetId = await postTweet(tweetMessage);
-  await handleTotalVerseBurned(tweetId); // Post in reply to the burn event
-}
+const burnMessages = [
+    "🔥 $VERSE is ablaze with another burn!",
+    "💥 The burn engine roars with $VERSE energy!",
+    "🚀 $VERSE just got hotter with this burn!",
+    "🔥 Feel the heat? That's another $VERSE burn!",
+    "💥 Boom! Another batch of $VERSE bites the dust!",
+    "🚀 Blazing through $VERSE with another fiery burn!",
+    "🔥 The $VERSE furnace is burning bright!",
+    "💥 A scorching $VERSE burn just took place!",
+    "🚀 Rockets ignited! $VERSE is burning up!",
+    "🔥 $VERSE just fueled the flames of the burn engine!",
+    "💥 $VERSE inferno! Another burn executed!",
+    "🚀 Blast off! $VERSE burn is a go!",
+    "🔥 $VERSE incineration in progress!",
+    "💥 Sizzling hot! $VERSE burn achieved!",
+    "🚀 Up in flames! Another $VERSE burn completed!",
+    "🔥 The $VERSE pyre blazes once more!",
+    "💥 Feel the burn! $VERSE is at it again!",
+    "🚀 $VERSE burn-off: Spectacular and fiery!",
+    "🔥 Turning up the heat with $VERSE!",
+    "💥 Flare-up detected in the $VERSE burn engine!",
+    "🚀 Another $VERSE combustion, brilliantly done!",
+    "🔥 $VERSE is sizzling away in the burn chamber!",
+    "💥 Sparking a $VERSE blaze with this burn!",
+    "🚀 The $VERSE flame dances with another burn!",
+    "🔥 $VERSE burn: a fiery spectacle!"
+  ];
+  
+  // Randomly select a message
+  function getRandomBurnMessage() {
+    const randomIndex = Math.floor(Math.random() * burnMessages.length);
+    return burnMessages[randomIndex];
+  }
+  
+  
+
+async function handleTokensBurned(event) {
+    await fetchVerseUsdRate();
+    const amountWei = event.returnValues.amount;
+    // Use string representation to handle large numbers
+    const amountEth = web3.utils.fromWei(amountWei.toString(), "ether");
+    const tweetMessage = `🔥💥 Verse Burn Detected: ${parseFloat(amountEth).toFixed(2)} VERSE (~$${(parseFloat(amountEth) * verseUsdRate).toFixed(2)} USD)\n${getRandomBurnMessage()}`;
+
+    const tweetId = await postTweet(tweetMessage);
+    await handleTotalVerseBurned(tweetId); // Post in reply to the burn event
+  }
+  
 
 async function monitorEvents() {
   const nullAddress = "0x0000000000000000000000000000000000000000";
